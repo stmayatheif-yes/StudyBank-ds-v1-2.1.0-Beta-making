@@ -915,13 +915,22 @@ async function loadSubject(k){
 }
 async function go(k,fromHash){
   cur=k;
-  if(!fromHash && location.hash!=="#"+k) location.hash=k;
+  if(!fromHash) setHash(k);
+  try{sessionStorage.setItem("lastSub",k)}catch(e){}
   updateNav();
   const need = k==="all" ? ["chinese","english"] : [k];
   if(need.every(x=>LOADED[x])){ Q = k==="all" ? [] : DATA[k]; home(); return; }
   A.innerHTML='<div class="card"><p class="meta"><span>載入中…</span></p></div>';
   await Promise.all(need.map(loadSubject));
   if(cur===k){ Q = k==="all" ? [] : DATA[k]; home(); }
+}
+function setHash(h){ if(location.hash!=="#"+h) history.replaceState(null,"","#"+h); }
+function showSettingsDirect(){
+  document.getElementById("navHome").classList.remove("active");
+  document.getElementById("navSettings").classList.add("active");
+  document.getElementById("subjectNav").style.display="none";
+  currentPage="settings";
+  renderSettings();
 }
 function updateNav(){document.querySelectorAll("#subjectNav button").forEach(b=>b.classList.toggle("active",b.dataset.s===cur));}
 function openSubjectModal(){document.getElementById("subjectModal").classList.add("active");}
@@ -936,12 +945,20 @@ function renderOverview(){
       <button class="go" ${ready?"":"disabled"} onclick="go('${k}')">${ready?"進入"+sub.label+"刷題":"準備中"}</button>
     </div>`;
   };
-  A.innerHTML=card("chinese")+card("english");
+  const notice = SYSTEM_NOTICE.trim()!=="" ? `<div class="sys-notice"><div class="sys-notice-icon">📢</div><div class="sys-notice-content">${SYSTEM_NOTICE}</div></div>` : "";
+  A.innerHTML=notice+card("chinese")+card("english");
+  renderAnnouncements();
 }
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1); if(SUB_KEYS.includes(h)&&h!==cur) go(h,true);});
 function initRoute(){
   const h=location.hash.slice(1);
-  if(SUB_KEYS.includes(h)){ go(h,true); }
+  if(h==="settings"){
+    let last=null; try{last=sessionStorage.getItem("lastSub")}catch(e){}
+    cur = last || "all";
+    loadSubject("chinese"); loadSubject("english");
+    showSettingsDirect();
+  }
+  else if(SUB_KEYS.includes(h)){ go(h,true); }
   else { go("all",true); openSubjectModal(); }
 }
 window.addEventListener("DOMContentLoaded",initRoute);
@@ -1007,7 +1024,6 @@ function home(){
   const ys = [...new Set(Q.map(q=>q.y))].sort((a,b) => a - b);
   const s=S();
   let noticeHTML = "";
-  if (cur === "chinese" && SYSTEM_NOTICE.trim() !== "") noticeHTML = `<div class="sys-notice"><div class="sys-notice-icon">📢</div><div class="sys-notice-content">${SYSTEM_NOTICE}</div></div>`;
 
   A.innerHTML=`${noticeHTML}
   <div class="card">
@@ -1034,7 +1050,6 @@ function home(){
     </div>
   </div>
 <div class="feedback-link" onclick="openFeedbackModal('improve')">任何改進想法？點擊意見反饋。</div>`;
-renderAnnouncements();
 }
 
 // 🌟 核心修改：隨機抽題時，自動將題組綁定並連續出題
@@ -1297,11 +1312,12 @@ function switchPage(page) {
   document.getElementById('navHome').classList.toggle('active', page === 'home');
   document.getElementById('navSettings').classList.toggle('active', page === 'settings');
   document.getElementById('subjectNav').style.display = page === 'home' ? '' : 'none';
+  if (page === 'settings') setHash('settings'); else setHash(cur);
   
   toggleSidebar();
 
   if (page === 'home') {
-    if (currentPage === 'quiz') { show(); } else { home(); }
+    if (currentPage === 'quiz') { show(); } else { go(cur, true); }
   } else if (page === 'settings') {
     renderSettings(); 
   }
