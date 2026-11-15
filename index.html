@@ -576,8 +576,14 @@
 </style>
 <style>
 .subject-nav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:56px 12px 4px}
-.subject-nav button{padding:8px 16px;border-radius:999px;border:1px solid var(--bd,#ddd);background:var(--card-bg,#fff);color:var(--text-color,#333);cursor:pointer;font-size:0.95rem}
-.subject-nav button.active{background:var(--ac,#3b82f6);color:#fff;border-color:transparent}
+.subject-nav button,.version-btn{padding:8px 16px;border-radius:999px;border:1px solid var(--bd);background:var(--card);color:var(--text-color);cursor:pointer;font-size:0.95rem;transition:all 0.2s}
+.version-btn{display:flex;align-items:center;justify-content:center;width:100%;padding:10px 16px;border-radius:10px;margin:0}
+html[data-style="glass"] .subject-nav button,
+html[data-style="glass"] .version-btn{background:rgba(255,255,255,0.4)!important;backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,0.6)!important;box-shadow:0 8px 32px rgba(0,0,0,0.08)}
+html[data-theme="dark"][data-style="glass"] .subject-nav button,
+html[data-theme="dark"][data-style="glass"] .version-btn{background:rgba(31,41,55,0.4)!important;border:1px solid rgba(255,255,255,0.15)!important;box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.subject-nav button.active,
+html[data-style="glass"] .subject-nav button.active{background:#3b82f6!important;color:#fff!important;border-color:transparent!important}
 </style>
 </head>
 <body>
