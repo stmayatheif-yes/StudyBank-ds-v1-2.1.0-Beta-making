@@ -928,6 +928,10 @@ async function go(k,fromHash){
   if(!fromHash) setHash(k);
   try{sessionStorage.setItem("lastSub",k)}catch(e){}
   updateNav();
+  // 進入任一科目頁時，側邊欄高亮與頂端切換列要回到「首頁」狀態（從設置頁跳回來時也一樣）
+  document.getElementById("navHome").classList.add("active");
+  document.getElementById("navSettings").classList.remove("active");
+  document.getElementById("subjectNav").style.display="";
   const need = k==="all" ? ["chinese","english"] : [k];
   if(need.every(x=>LOADED[x])){ Q = k==="all" ? [] : DATA[k]; home(); return; }
   A.innerHTML='<div class="card"><p class="meta"><span>載入中…</span></p></div>';
@@ -944,7 +948,14 @@ function showSettingsDirect(){
 }
 function updateNav(){document.querySelectorAll("#subjectNav button").forEach(b=>b.classList.toggle("active",b.dataset.s===cur));}
 function openSubjectModal(){document.getElementById("subjectModal").classList.add("active");}
-function pickSubject(k){document.getElementById("subjectModal").classList.remove("active"); go(k);}
+function pickSubject(k){
+  document.getElementById("subjectModal").classList.remove("active");
+  // 使用者可能已經切到設置頁，選科目時要把側邊欄切回首頁、顯示科目切換按鈕
+  document.getElementById("navHome").classList.add("active");
+  document.getElementById("navSettings").classList.remove("active");
+  document.getElementById("subjectNav").style.display="";
+  go(k);
+}
 function renderOverview(){
   currentPage="home";
   const card=k=>{
