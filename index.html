@@ -573,6 +573,7 @@
   }
 }
 
+  .feedback-improve { font-style: italic; text-decoration: underline; cursor: pointer; }
 </style>
 <style>
 .subject-nav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:56px 12px 4px}
@@ -954,6 +955,7 @@ function renderOverview(){
   const notice = SYSTEM_NOTICE.trim()!=="" ? `<div class="sys-notice"><div class="sys-notice-icon">📢</div><div class="sys-notice-content">${SYSTEM_NOTICE}</div></div>` : "";
   A.innerHTML=notice+card("chinese")+card("english");
   renderAnnouncements();
+  A.insertAdjacentHTML("beforeend", '<div class="feedback-link feedback-improve" onclick="openFeedbackModal(\'improve\')">任何改進想法？點擊意見反饋。</div>');
   const mq=document.getElementById("marqueeBar");
   const vbtn='<div style="margin:0 0 20px"><button class="btn-icon" style="width:100%;height:48px;font-size:1rem" onclick="openVersionModal()" title="版本內容">版本內容</button></div>';
   if(mq) mq.insertAdjacentHTML("afterend", vbtn); else A.insertAdjacentHTML("beforeend", vbtn);
@@ -1058,7 +1060,7 @@ function home(){
       </div>
     </div>
   </div>
-<div class="feedback-link" onclick="openFeedbackModal('improve')">任何改進想法？點擊意見反饋。</div>`;
+<div class="feedback-link feedback-improve" onclick="openFeedbackModal('improve')">任何改進想法？點擊意見反饋。</div>`;
 }
 
 // 🌟 核心修改：隨機抽題時，自動將題組綁定並連續出題
@@ -1225,7 +1227,7 @@ function show(){
         }).join("")+
     `<div id="f">${done ? generateFeedback(q) : `<button class="go" onclick="submit()">送出答案</button>`}</div>
   </div>
-  <div class="feedback-link" onclick="openFeedbackModal('issue')">題目有問題？點擊反饋。</div>`;
+  <div class="feedback-link feedback-improve" onclick="openFeedbackModal('issue')">題目有問題？點擊反饋。</div>`;
 }
 
 function generateFeedback(q){
