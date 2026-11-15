@@ -1311,6 +1311,7 @@ function switchPage(page) {
   document.getElementById('navSettings').classList.toggle('active', page === 'settings');
   document.getElementById('subjectNav').style.display = page === 'home' ? '' : 'none';
   if (page === 'settings') setHash('settings'); else setHash(cur);
+  if (page === 'settings') { const sm = document.getElementById('subjectModal'); if (sm) sm.classList.remove('active'); }
   
   toggleSidebar();
 
