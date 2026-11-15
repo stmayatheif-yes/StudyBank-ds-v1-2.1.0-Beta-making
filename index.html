@@ -948,6 +948,9 @@ function renderOverview(){
   const notice = SYSTEM_NOTICE.trim()!=="" ? `<div class="sys-notice"><div class="sys-notice-icon">📢</div><div class="sys-notice-content">${SYSTEM_NOTICE}</div></div>` : "";
   A.innerHTML=notice+card("chinese")+card("english");
   renderAnnouncements();
+  const mq=document.getElementById("marqueeBar");
+  const vbtn='<div style="margin:0 0 20px"><button class="btn-icon" style="width:100%" onclick="openVersionModal()" title="版本內容">版本內容</button></div>';
+  if(mq) mq.insertAdjacentHTML("afterend", vbtn); else A.insertAdjacentHTML("beforeend", vbtn);
 }
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1); if(SUB_KEYS.includes(h)&&h!==cur) go(h,true);});
 function initRoute(){
@@ -1029,7 +1032,7 @@ function home(){
   <div class="card">
     <div class="header-row">
       <h2>${SUBJECTS[cur].title}</h2>
-      <button class="btn-icon" onclick="openVersionModal()" title="版本內容">版本內容</button>
+      
       <button class="btn-icon" onclick="openSearchModal()" title="搜尋題目">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"></circle><line x1="21" y1="21" x2="15" y2="15"></line></svg>
         <span class="search-btn-text">搜尋題目</span>
