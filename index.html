@@ -1429,6 +1429,17 @@ function resetAppearance() {
 }
 
 function renderSettings() {
+  // 重新渲染前記住各排色塊的橫向捲動位置，渲染後還原，避免選色/自訂/編輯後跳回最前面
+  const scrollKeep = Array.from(document.querySelectorAll('.preset-scroll-wrapper')).map(el => el.scrollLeft);
+  const pageY = window.scrollY;
+  _renderSettings();
+  document.querySelectorAll('.preset-scroll-wrapper').forEach((el, i) => {
+    if (scrollKeep[i] !== undefined) el.scrollLeft = scrollKeep[i];
+  });
+  window.scrollTo(0, pageY);
+}
+
+function _renderSettings() {
   const currentStyle = localStorage.getItem('style') || 'solid';
   const currentBgType = localStorage.getItem('bg_type') || 'gradient';
   const currentBg1 = localStorage.getItem('bg_color_1') || '#f0f2f5';
