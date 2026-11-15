@@ -574,6 +574,9 @@
 }
 
   .feedback-improve { font-style: italic; text-decoration: underline; cursor: pointer; }
+  .analysis { margin: 0 0 16px 0; font-size: 0.95rem; }
+  .analysis summary { cursor: pointer; font-weight: bold; opacity: 0.8; }
+  .analysis-body { margin-top: 10px; padding: 12px; line-height: 1.8; border-radius: 8px; background: var(--card); border: 1px solid var(--bd); }
 </style>
 <style>
 .subject-nav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:56px 12px 4px}
@@ -1064,81 +1067,53 @@ function home(){
 }
 
 // 🌟 核心修改：隨機抽題時，自動將題組綁定並連續出題
+// 找出某題所屬的題組範圍（依題號落在哪個【x~y題為題組題】範圍內判斷）
+function findGroup(q){
+  const qn=parseInt(q.n);
+  for(const x of Q){
+    if(x.y!==q.y) continue;
+    const m=x.q.match(/【(\d+)~(\d+)題為題組題】/);
+    if(m && qn>=+m[1] && qn<=+m[2]) return {y:q.y,start:+m[1],end:+m[2]};
+  }
+  return null;
+}
+function groupMembers(g){
+  return Q.filter(x=>x.y===g.y && +x.n>=g.start && +x.n<=g.end).sort((a,b)=>+a.n-+b.n);
+}
+
+// 🌟 隨機刷題 / 錯題本：以「單位」為單位打亂（獨立題一題一單位，題組整組一單位）
 function start(m,v){
-  currentPage = 'quiz'; // 🌟 標記目前在刷題
+  currentPage='quiz';
   const s=S();
-  let baseList = Q.filter(q=>m=="all"||(m=="y"&&q.y==v)||(m=="w"&&s.w[id(q)]));
-  if(!baseList.length){alert("沒有題目");return}
+  const pool=Q.filter(q=>m=="all"||(m=="y"&&q.y==v)||(m=="w"&&s.w[id(q)]));
+  if(!pool.length){alert("沒有題目");return}
 
-  if (m === "all" || m === "w") {
-    // 處理隨機模式：把題組綁在一起
-    let bundledList = [];
-    let processedIds = new Set();
-
-    baseList.forEach(q => {
-      if (processedIds.has(id(q))) return;
-
-      // 檢查這題有沒有題組標籤
-      const groupMatch = q.q.match(/【(\d+)~(\d+)題為題組題】/);
-      if (groupMatch) {
-        const startN = parseInt(groupMatch[1]);
-        const endN = parseInt(groupMatch[2]);
-        
-        // 把整個題組拉出來，並依照題號排序
-        let groupQs = baseList.filter(item => 
-          item.y === q.y && 
-          parseInt(item.n) >= startN && 
-          parseInt(item.n) <= endN
-        ).sort((a,b) => parseInt(a.n) - parseInt(b.n));
-
-        groupQs.forEach(gq => {
-          bundledList.push(gq);
-          processedIds.add(id(gq));
-        });
-      } else {
-        // 獨立題目
-        bundledList.push(q);
-        processedIds.add(id(q));
-      }
-    });
-    // 最後把「題組包」跟「獨立題目」隨機打亂
-    list = bundledList.sort(() => Math.random() - 0.5);
-    
-    // 但因為隨機打亂會把題組拆散，所以我們要再重新遍歷一次，確保題組內部是連續的
-    let finalList = [];
-    let seen = new Set();
-    list.forEach(q => {
-      if (seen.has(id(q))) return;
-      const groupMatch = q.q.match(/【(\d+)~(\d+)題為題組題】/);
-      if (groupMatch) {
-        const startN = parseInt(groupMatch[1]);
-        const endN = parseInt(groupMatch[2]);
-        let groupQs = Q.filter(item => 
-          item.y === q.y && 
-          parseInt(item.n) >= startN && 
-          parseInt(item.n) <= endN
-        ).sort((a,b) => parseInt(a.n) - parseInt(b.n));
-        
-        groupQs.forEach(gq => {
-           if(!seen.has(id(gq))) {
-             finalList.push(gq);
-             seen.add(id(gq));
-           }
-        });
-      } else {
-        finalList.push(q);
+  if(m==="all"||m==="w"){
+    const poolIds=new Set(pool.map(id));
+    const seen=new Set();
+    const units=[];
+    pool.forEach(q=>{
+      if(seen.has(id(q))) return;
+      const g=findGroup(q);
+      if(g){
+        // 錯題本只取該組中答錯的題；隨機刷題則整組都取
+        const members=groupMembers(g).filter(x=>poolIds.has(id(x)));
+        members.forEach(x=>seen.add(id(x)));
+        units.push(members);
+      }else{
         seen.add(id(q));
+        units.push([q]);
       }
     });
-    list = finalList;
-
-  } else {
+    units.sort(()=>Math.random()-0.5);
+    list=units.flat();
+  }else{
     // 依年度模式：直接照題號排
-    list = baseList.sort((a, b) => parseInt(a.n) - parseInt(b.n));
+    list=pool.sort((a,b)=>parseInt(a.n)-parseInt(b.n));
   }
 
-  i=0; userAnswers = {}; sessionStats = { total: list.length, correct: 0 };
-  isReviewingWrong = (m === "w"); 
+  i=0; userAnswers={}; sessionStats={total:list.length,correct:0};
+  isReviewingWrong=(m==="w");
   show();
 }
 
@@ -1230,6 +1205,7 @@ function show(){
   <div class="feedback-link feedback-improve" onclick="openFeedbackModal('issue')">題目有問題？點擊反饋。</div>`;
 }
 
+const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 function generateFeedback(q){
   const p = userAnswers[id(q)] ? [...userAnswers[id(q)]].sort().map(k=>L[k]).join("") : "";
   const ok = p == q.a;
@@ -1237,7 +1213,7 @@ function generateFeedback(q){
   let feedbackIcon = ok ? `<svg viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-lg"><polyline points="20 6 9 17 4 12"></polyline></svg>` : `<svg viewBox="0 0 24 24" fill="none" stroke="var(--no)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-lg"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
   let nextIcon = isLast ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>` : "";
   let btnNext = `<button class="btn-next" onclick="${isLast ? 'showReport()' : 'next()'}">${nextIcon}${isLast ? "看測驗結果" : "下一題"}</button>`;
-  return `<div class="feedback" style="border-left-color: ${ok ? 'var(--ok)' : 'var(--no)'}"><p style="margin: 0 0 12px 0; font-weight: bold; color: ${ok ? 'var(--ok)' : 'var(--no)'}; display: flex; align-items: center;">${feedbackIcon}${ok ? "答對了！" : "答錯了"}</p><p style="margin: 0 0 16px 0; font-size: 0.95rem;">正確答案：<strong>${q.a}</strong></p>${btnNext}</div>`;
+  return `<div class="feedback" style="border-left-color: ${ok ? 'var(--ok)' : 'var(--no)'}"><p style="margin: 0 0 12px 0; font-weight: bold; color: ${ok ? 'var(--ok)' : 'var(--no)'}; display: flex; align-items: center;">${feedbackIcon}${ok ? "答對了！" : "答錯了"}</p><p style="margin: 0 0 16px 0; font-size: 0.95rem;">正確答案：<strong>${q.a}</strong></p><details class="analysis"><summary>查看解析</summary><div class="analysis-body">${q.e ? escHtml(q.e).replace(/\n/g,'<br>') : '暫無解析'}</div></details>${btnNext}</div>`;
 }
 
 function pick(k){ if(done)return; const q=list[i]; if(q.a.length==1){picks=new Set([k]);submit();return} picks.has(k)?picks.delete(k):picks.add(k); document.getElementById("o"+k).classList.toggle("sel"); }
