@@ -949,7 +949,7 @@ function renderOverview(){
   A.innerHTML=notice+card("chinese")+card("english");
   renderAnnouncements();
   const mq=document.getElementById("marqueeBar");
-  const vbtn='<div style="margin:0 0 20px"><button class="btn-icon" style="width:100%" onclick="openVersionModal()" title="版本內容">版本內容</button></div>';
+  const vbtn='<div style="margin:0 0 20px"><button class="btn-icon" style="width:100%;height:48px" onclick="openVersionModal()" title="版本內容">版本內容</button></div>';
   if(mq) mq.insertAdjacentHTML("afterend", vbtn); else A.insertAdjacentHTML("beforeend", vbtn);
 }
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1); if(SUB_KEYS.includes(h)&&h!==cur) go(h,true);});
